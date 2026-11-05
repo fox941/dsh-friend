@@ -1,0 +1,26 @@
+{
+  "project": "yyh-001/dsh-meme",
+  "url": "https://github.com/yyh-001/dsh-meme",
+  "commit": "3704ae7b9fda1293b991fc7c755c2b4d09558368",
+  "version": "0.1.77",
+  "license": "MIT",
+  "originalSHA256": "985acbe43dc0b3bd77e0935fd554ad46a0ed9910ed0668e9d5b6184c2f01d738",
+  "derivedSHA256": "9b7a552e57ce57eefe395a27625e7ed98d8663989c76b7b024d72cbe4d5c7442",
+  "modifications": [
+    "Removed unused defineTool import",
+    "Omitted registerSendMemeTool export and its tool implementation"
+  ],
+  "preserved": "All retained storage/search functions are byte-identical to the fixed upstream source",
+  "use": [
+    "MemesStore",
+    "ensurePackAt",
+    "openIndexWriter"
+  ],
+  "notActivated": [
+    "upstream prompts",
+    "upstream model callbacks",
+    "upstream HTTP server",
+    "upstream direct QQ send",
+    "built-in sticker pack"
+  ]
+}

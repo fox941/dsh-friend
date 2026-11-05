@@ -1,0 +1,7 @@
+import {ownerMessage} from './evidence.js';
+export function attachAttentionAgent(ctx,adapter){
+  if(adapter.diagnostics)ctx.tools.register({name:'friend_diagnostics_read',description:'只读汇总最近运行的行为接续、等待/沉默、模型调用次数与tokens/耗时、情绪依据风险线索；不调用模型、不改任何状态，不将自主沉默判为故障。',parameters:{type:'object',properties:{hours:{type:'integer',minimum:1,maximum:720},limit:{type:'integer',minimum:1,maximum:100},intentId:{type:'string',description:'可选，查看指定意图的状态变化。'}}},output:{schema:{type:'object',additionalProperties:true},render:(_args,value)=>[{type:'text',text:JSON.stringify(value)}]},async execute(args,exec){ownerMessage(exec.agent);exec.signal?.throwIfAborted();return adapter.diagnostics.read(args);}});
+  if(!adapter.attention?.enabled())return;
+  ctx.systemPrompt.section({name:'ai-friend:attention',order:10420,interpolate:false,text:'Web、QQ、B站和自主活动共用一份自我、情绪、兴趣、记忆与行为协调。消息不机械优先。当前消息进入表达阶段表示你已选择关注它，仍可决定不发送或提出暂缓；已暂缓的事项由协调器在新条件下重新考虑，不自动发送旧稿。不要把内部选择、草稿或反复反思写成已发生的外部经历。friend_attention_status可查看当前真实意图与进度；它不证明所有意图都已执行。'});
+  ctx.tools.register({name:'friend_attention_status',description:'只读查看同一角色的全局活动、待考虑事项、延后条件和近期行为选择。不是长期记忆或发送成功证明。',parameters:{type:'object',properties:{}},output:{schema:{type:'object',additionalProperties:true},render:(_args,value)=>[{type:'text',text:JSON.stringify(value)}]},async execute(_args,exec){ownerMessage(exec.agent);return {status:'read',...adapter.attention.status(),planning:adapter.intentReuse?.read()??null};}});
+}

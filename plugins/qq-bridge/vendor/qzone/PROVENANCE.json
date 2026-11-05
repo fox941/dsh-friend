@@ -1,0 +1,22 @@
+{
+  "repo": "https://github.com/Gu-Heping/onebot-qzone",
+  "commit": "e2c6da0ffea8937adac690352647bb023c312759",
+  "license": "MIT",
+  "files": [
+    "src/qzone/feeds3Parser.ts",
+    "src/qzone/feeds3/comments.ts",
+    "src/qzone/feeds3/content.ts",
+    "src/qzone/feeds3/feedDataCanonical.ts",
+    "src/qzone/feeds3/helpers.ts",
+    "src/qzone/feeds3/items.ts",
+    "src/qzone/feeds3/likes.ts",
+    "src/qzone/feeds3/meta.ts",
+    "src/qzone/feeds3/preprocess.ts",
+    "src/qzone/feeds3/tidParams.ts",
+    "src/qzone/utils.ts",
+    "src/qzone/emoji.ts",
+    "src/qzone/types.ts"
+  ],
+  "transform": "Node24 stripTypeScriptTypes; parser only; no login/browser/agent runtime",
+  "adaptation": "utils.log is a no-op; no private post excerpts in process logs"
+}

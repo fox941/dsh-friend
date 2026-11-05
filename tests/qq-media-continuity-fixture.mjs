@@ -1,0 +1,20 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import {pathToFileURL} from 'node:url';
+const src=process.env.FRIEND_ADAPTER_SOURCE??path.resolve(import.meta.dirname,'../plugins/companion-adapter/src'),load=n=>import(pathToFileURL(path.join(src,n))),{Journal}=await load('journal.js'),{Platforms}=await load('platforms.js');
+export const bot='987654321',owner='123456789',alice='112233445',bob='112233446',group='719030047';
+const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aSfkAAAAASUVORK5CYII=','base64');
+export const message=(text='请用语音回答',{id=1,sender=alice,groupId,segments}={})=>({post_type:'message',self_id:Number(bot),message_type:groupId?'group':'private',...groupId?{group_id:Number(groupId)}:{},user_id:Number(sender),message_id:id,sender:{user_id:Number(sender),nickname:'普通好友'},message:segments??[{type:'text',data:{text}}]});
+export async function fixture(t){
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'qq-multimedia-')),journal=new Journal(root+'/companion'),state={friends:new Set([alice,bob]),decision:{disposition:'reply',body:'看到了。',reason:'正常交流'},voiceFailure:false,onVoice:null,onDecision:null,sendError:false,noAck:false,voices:0,description:'餐桌上有两盘菜，左边有红色浓酱，右边碗下铺着碎冰。',visionFailure:false,onVision:null,reads:0,clock:Date.now()},sends=[],frames=[],wakes=[],learned=[];
+ const adapter={journal,writeEnabled:true,activities:{instance:root},qq:{ready:true,binding:{id:'binding',active:1,bot_qq:bot,owner_qq:owner},connection:{connected:true}},growth:{read:()=>({identityId:'same-character',states:[{kind:'self_description',status:'established',statement:'OWNER-PRIVATE-SECRET'}]}),emotions:{context:()=>null}},attention:{offer(){},store:{patch(_id,_status,change){wakes.push(change.wake);}}}};
+ const clients={async qq(action,params){if(action==='get_friend_list')return [...state.friends].map(user_id=>({user_id}));if(action==='get_image'){state.reads++;return {base64:png.toString('base64')};}if(action==='get_record'){state.reads++;return {base64:Buffer.from('synthetic-wave').toString('base64')};}sends.push({action,params});if(state.sendError)throw Error('ack lost');return state.noAck?{}:{message_id:500+sends.length};}};
+ const memory={async context(){return {learningAllowed:true,items:[]};},enqueue(e,p){learned.push({eventId:e.id,proposals:p});},bind(){},async close(){}};
+ const platforms=new Platforms(adapter,{clients,socialMemory:memory,config:{groups:[group]},now:()=>new Date(state.clock)});adapter.platforms=platforms;
+ platforms.bind({conversation:async frame=>{frames.push(frame);return await state.onDecision?.(frame)??state.decision;},saveImage:async({data,mediaType})=>({attachmentId:'fixture-image',bytes:data.length,mediaType}),vision:async()=>{await state.onVision?.();if(state.visionFailure)throw Error('synthetic unavailable');return {description:state.description};}});
+ // Exercise the actual QQMedia.voice/asset implementation with only the process
+ // runner replaced. No voice provider, OneBot server or production file is used.
+ platforms.media.run=async(_exe,args)=>{state.voices++;await state.onVoice?.();if(state.voiceFailure)throw Error('private provider error with local path');const output=args[args.indexOf('-OutputFile')+1];await fs.writeFile(output,Buffer.concat([Buffer.from('RIFF'),Buffer.alloc(124,1)]));};
+ t.after(async()=>{await platforms.close();journal.close();const absolute=await fs.realpath(root),temp=await fs.realpath(os.tmpdir());assert.equal(path.dirname(absolute),temp);await fs.rm(absolute,{recursive:true});});
+ return {root,journal,adapter,platforms,state,sends,frames,wakes,learned,receive:e=>platforms.receive(e),run:(id,signal=new AbortController().signal)=>platforms.execute({id:'intent-'+id,payload:{platformEventId:id}},signal)};
+}
+
+export const picture=(sender=owner,id=1,groupId=group)=>message('',{sender,id,groupId,segments:[{type:'image',data:{file:'qq-image-id'}}]});

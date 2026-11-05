@@ -1,0 +1,3 @@
+- insert:
+    - id: friend-qq-bridge
+      name: '@ai-friend/qq-bridge'

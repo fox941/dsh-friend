@@ -1,0 +1,20 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {pathToFileURL} from 'node:url';import path from 'node:path';import http from 'node:http';import fs from 'node:fs/promises';import vm from 'node:vm';
+const src=process.env.FRIEND_ADAPTER_SOURCE??path.resolve(import.meta.dirname,'../plugins/companion-adapter/src'),{attachProfileSummaryHost}=await import(pathToFileURL(src+'/profile-summary-host.js'));
+const req=createRequire('D:/ai friend/node_modules/.pnpm/node_modules/@deepseek-ai/dsh-client-connection/package.json'),{Context}=await import(pathToFileURL(req.resolve('@deepseek-ai/cordis'))),{HostConnectionService}=await import(pathToFileURL(req.resolve('@deepseek-ai/dsh-client-connection')));
+test('real DSH shared Fetch carrier authenticates profile reads without a WebServer injection or taking over Gateway',async t=>{
+ const ctx=new Context(),data={runtime:{entries:[],limit:4096},sources:[],summaries:[],status:{}},errors=[];
+ ctx.on('internal/error',error=>errors.push(error));
+ const auth={isAuthenticated:request=>request.headers.cookie==='browser=valid',authenticateApi:()=>undefined},connection=new HostConnectionService(ctx,[],auth);
+ connection.rpc.intercept('/api',endpoint=>endpoint==='core/ping',async()=>({ok:true,value:'pong'}));
+ ctx.plugin({name:'profile-sdk-integration',apply:bound=>attachProfileSummaryHost(bound,{profileSummary:{view:async()=>data}})});
+ await new Promise(r=>setTimeout(r,30));assert.equal(errors.length,0);
+ const shared=connection.createSharedFetchHandler('/api');
+ const server=http.createServer(async(request,response)=>{const admission=connection.admit(request);if(admission.rejection){response.writeHead(admission.rejection);response.end();return;}const chunks=[];for await(const c of request)chunks.push(c);const req=new Request('http://'+request.headers.host+request.url,{method:request.method,headers:request.headers,...chunks.length?{body:Buffer.concat(chunks)}:{}}),result=await shared.fetch(req,admission.peer);response.writeHead(result.status,Object.fromEntries(result.headers));response.end(Buffer.from(await result.arrayBuffer()));});await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
+ t.after(async()=>{await new Promise(r=>server.close(r));await ctx.dispose?.();});
+ const unauth=await fetch(base+'/api/ai-friend-person-profile');assert.equal(unauth.status,401);
+ const response=await fetch(base+'/api/ai-friend-person-profile',{headers:{cookie:'browser=valid',origin:base}});assert.equal(response.status,200);assert.deepEqual(await response.json(),data);
+ assert.equal((await shared.fetch(new Request(base+'/api/ai-friend-person-profile'),{principal:{kind:'agent'}})).status,403);
+ const core=await fetch(base+'/api/core/ping',{method:'POST',headers:{'content-type':'application/json',cookie:'browser=valid',origin:base},body:JSON.stringify({type:'client-request',rpcId:'ping',method:'core/ping',payload:{}})});assert.equal((await core.json()).result.value,'pong');
+ let browser;vm.runInNewContext(await fs.readFile(src+'/client.js','utf8'),{window:{__ModuleLoader__:{load(spec){browser=spec.factory(name=>name==='react'?{createElement:()=>null}:{});}}},TextEncoder});
+ assert.deepEqual(await browser.readProfile(undefined,async(route,options)=>{assert.equal(route,'/api/ai-friend-person-profile');assert.equal(options.credentials,'same-origin');return Response.json(data);}),data);await assert.rejects(browser.readProfile(undefined,async()=>new Response(null,{status:403})));
+});

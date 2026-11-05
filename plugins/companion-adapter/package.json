@@ -1,0 +1,65 @@
+{
+  "name": "@ai-friend/companion-adapter",
+  "version": "0.76.0",
+  "private": true,
+  "type": "module",
+  "description": "陪伴运行适配：主用户QQ私聊、统一记忆、有据成长、多项情绪与心境、夜间整理和可恢复保护。",
+  "exports": {
+    ".": "./src/index.js",
+    "./agent": "./src/agent.js",
+    "./client": "./src/client.js",
+    "./memory-strategy": "./src/memory-strategy.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./diagnostics": "./src/diagnostics-report.js",
+    "./protection-offline": "./src/protection-offline.js",
+    "./qq-offline": "./src/qq-offline.js",
+    "./bilibili-offline": "./src/bilibili-offline.js",
+    "./video-offline": "./src/video-offline.js",
+    "./runtime-health": "./src/runtime-health.js",
+    "./platform-results": "./src/platform-results.js"
+  },
+  "files": [
+    "src",
+    "vendor",
+    "QQ-REFERENCES.md",
+    "locale",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md",
+    "EMOTION-REFERENCES.md"
+  ],
+  "engines": {
+    "node": ">=24.22.1 <25",
+    "dsh": "0.2.1-rc.3"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.3",
+    "dsh-mnemon": "0.5.36",
+    "dsh-mnemon-source-memory-spaces": "0.5.36",
+    "yaml": "2.9.1",
+    "dsh-mnemon-source-runtime": "0.5.16",
+    "@ai-friend/attention-scheduler": "0.3.0",
+    "@ai-friend/qq-bridge": "0.20.0",
+    "@ai-friend/bilibili-tool": "0.10.0",
+    "@ai-friend/activity-console": "0.2.0"
+  },
+  "dependencies": {
+    "ws": "8.22.0",
+    "zod": "4.6.7"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "external": [
+        "dsh-mnemon/client"
+      ],
+      "inject": [
+        "dsh-mnemon"
+      ]
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

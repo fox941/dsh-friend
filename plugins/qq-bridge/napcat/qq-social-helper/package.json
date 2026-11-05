@@ -1,0 +1,8 @@
+{
+  "name": "ai-friend-social-helper",
+  "version": "0.3.0",
+  "type": "module",
+  "main": "index.mjs",
+  "description": "AI Friend authenticated local QQ group application adapter",
+  "private": true
+}

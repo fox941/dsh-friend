@@ -1,0 +1,8 @@
+{
+  "name": "@ai-friend/test-isolation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {".": "./src/index.js"},
+  "description": "仅挂载于隔离测试实例的 DSH 全局工具守卫，不修改主实例。"
+}

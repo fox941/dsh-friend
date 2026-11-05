@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/CZX2244/dsh-bilibili",
+  "commit": "c53af9dee30cf04ee759ac6857d5803196fb2a95",
+  "license": "MIT",
+  "reuse": "Only pure keyframe selection; no tool registration, prompts, login or ASR endpoints."
+}

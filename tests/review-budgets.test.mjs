@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';import path from 'node:path';import {pathToFileURL} from 'node:url';
+const bsource=process.env.FRIEND_BILIBILI_SOURCE??path.resolve(import.meta.dirname,'../plugins/bilibili-tool/src');
+const bload=n=>import(pathToFileURL(path.join(bsource,n)));
+const src=process.env.FRIEND_ADAPTER_SOURCE??path.resolve(import.meta.dirname,'../plugins/companion-adapter/src'),load=n=>import(pathToFileURL(path.join(src,n)));
+const {reviewStructured}=await load('structured-review.js');
+test('independent review routes use their authorized output ceilings rather than inheriting a smaller generic cap',async()=>{
+ let seen;const llm={resolveModelInfo:async()=>({reasoning:{efforts:[{id:'low'}]}}),async *stream(options){seen=options;yield {type:'block-end',block:{type:'text',text:'{}'}};yield {type:'finish',reason:{kind:'stop'}};}};
+ const route={provider:'same-provider',model:'same-model'},agent={options:route},signal=new AbortController().signal;
+ for(const [file,fn,args,max]of [['attention-reviewer.js','reviewAttention',[route,{},signal],8192],['activity-reviewer.js','reviewActivity',[route,'memory',{},signal,reviewStructured],256000],['activity-reviewer.js','reviewActivity',[route,'vision',{},signal,reviewStructured],256000],['growth-reviewer.js','reviewGrowth',[agent,{},signal],8192],['emotion-reviewer.js','reviewEmotion',[agent,{},signal],8192],['goal-reviewer.js','reviewGoal',[route,{},signal],4096],['proactive-reviewer.js','reviewProactive',[route,'audit',{},signal],4096],['proactive-reviewer.js','reviewProactive',[route,'compose',{},signal],4096],['bilibili-social-review.js','reviewSocial',[route,{},signal,reviewStructured],8192],['bilibili-social-review.js','reviewSocialMemory',[route,{},signal,reviewStructured],8192]]){await (await (['activity-reviewer.js','bilibili-social-review.js'].includes(file)?bload(file):load(file)))[fn](llm,...args);assert.equal(seen.maxTokens,max,file+' '+fn);assert.equal(seen.reasoningEffort,'low');}
+});

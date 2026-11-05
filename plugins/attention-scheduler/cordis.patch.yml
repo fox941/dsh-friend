@@ -1,0 +1,3 @@
+- insert:
+    - id: friend-scheduler
+      name: '@ai-friend/attention-scheduler'

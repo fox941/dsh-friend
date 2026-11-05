@@ -1,0 +1,63 @@
+{
+  "name": "ai-friend-dsh",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.28.5",
+  "engines": {
+    "node": ">=24.22.1 <25"
+  },
+  "description": "Isolated local DSH and Mnemon development deployment",
+  "scripts": {
+    "start": "node scripts/runtime.mjs start",
+    "stop": "node scripts/runtime.mjs stop",
+    "status": "node scripts/runtime.mjs status",
+    "backup": "node scripts/archive.mjs backup",
+    "export:memory": "node scripts/archive.mjs export",
+    "verify": "node --test tests/*.test.mjs",
+    "install:adapter": "node scripts/install-adapter.mjs",
+    "verify:adapter": "node --test tests/adapter.test.mjs",
+    "verify:growth": "node --test tests/growth.test.mjs",
+    "verify:preview": "node --test tests/preview.test.mjs",
+    "verify:apply": "node --test tests/apply.test.mjs",
+    "verify:nightly": "node --test tests/nightly.test.mjs",
+    "verify:protection": "node --test tests/protection.test.mjs tests/protection-control.test.mjs",
+    "verify:emotion": "node --test tests/emotion.test.mjs tests/emotion-protection.test.mjs",
+    "verify:conversation": "node --test tests/conversation-memory.test.mjs",
+    "verify:qq": "node --test tests/qq.test.mjs tests/qq-offline.test.mjs",
+    "qq:status": "node scripts/qq.mjs status",
+    "verify:activities": "node --test tests/activities.test.mjs tests/bilibili-client.test.mjs",
+    "bilibili:status": "node scripts/bilibili.mjs status",
+    "bilibili:console": "node scripts/bilibili.mjs console",
+    "verify:perception": "node --test tests/attention-affect.test.mjs",
+    "verify:diagnostics": "node --test tests/diagnostics.test.mjs",
+    "verify:goals": "node --test tests/goals.test.mjs",
+    "goals:status": "node scripts/goals.mjs",
+    "verify:proactive": "node --test tests/proactive.test.mjs",
+    "proactive:status": "node scripts/proactive.mjs",
+    "restart": "node scripts/runtime.mjs restart",
+    "recover": "node scripts/runtime.mjs recover",
+    "verify:runtime": "node --test tests/runtime.test.mjs",
+    "migration:pack": "node scripts/migration.mjs pack",
+    "migration:verify": "node scripts/migration.mjs verify",
+    "migration:restore": "node scripts/migration.mjs restore",
+    "verify:migration": "node --test tests/migration.test.mjs",
+    "verify:instances": "node --test tests/instances.test.mjs",
+    "verify:updates": "node --test tests/updates.test.mjs",
+    "verify:autostart": "node --test tests/autostart.test.mjs",
+    "verify:platforms": "node --test tests/platforms.test.mjs tests/qq-helper.test.mjs"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh": "0.2.1-rc.3",
+    "@mnemon-dev/mnemon": "0.2.13"
+  },
+  "devDependencies": {
+    "xstate": "5.33.3",
+    "@ai-friend/attention-scheduler": "link:plugins/attention-scheduler",
+    "zod": "4.6.7"
+  },
+  "migrationToolVersion": "1.0.0",
+  "instanceToolVersion": "1.0.0",
+  "updateToolVersion": "1.0.0",
+  "autostartToolVersion": "1.0.0"
+}

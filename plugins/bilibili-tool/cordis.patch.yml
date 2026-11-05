@@ -1,0 +1,3 @@
+- insert:
+    - id: friend-bilibili-tool
+      name: '@ai-friend/bilibili-tool'

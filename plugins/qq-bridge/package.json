@@ -1,0 +1,64 @@
+{
+  "name": "@ai-friend/qq-bridge",
+  "version": "0.20.0",
+  "private": true,
+  "type": "module",
+  "description": "DSH QQ bridge with scoped social memory, durable receipts, media and account operations; host supplies global identity, policy and attention.",
+  "exports": {
+    ".": "./src/index.js",
+    "./channel": "./src/qq.js",
+    "./store": "./src/qq-store.js",
+    "./replies": "./src/qq-replies.js",
+    "./config": "./src/qq-config.js",
+    "./media": "./src/qq-media.js",
+    "./helper": "./src/qq-helper-client.js",
+    "./accounts": "./src/accounts.js",
+    "./social": "./src/social.js",
+    "./audio-runtime": "./src/audio-runtime.js",
+    "./transport": "./vendor/dsh-onebot/connection.js",
+    "./napcat-helper": "./napcat/qq-social-helper/index.mjs",
+    "./social-memory": "./src/social-memory.js",
+    "./social-native": "./src/social-native.js",
+    "./social-memory-store": "./src/social-memory-store.js",
+    "./social-memory-inspect": "./src/social-memory-inspect.js",
+    "./social-lifecycle": "./src/social-lifecycle.js",
+    "./profile-actions": "./src/profile-actions.js",
+    "./qzone-read": "./src/qzone-read.js",
+    "./social-addressing": "./src/social-addressing.js",
+    "./social-principal": "./src/social-principal.js",
+    "./reliability": "./src/reliability.js",
+    "./relationships": "./src/relationships.js",
+    "./incoming-requests": "./src/incoming-requests.js",
+    "./qzone-comments": "./src/qzone-comments.js",
+    "./qzone-inbox": "./src/qzone-inbox.js",
+    "./qzone-reply": "./src/qzone-reply.js",
+    "./space-memory-source": "./src/space-memory-source.js",
+    "./person-policy": "./src/person-policy.js",
+    "./social-context": "./src/social-context.js",
+    "./stickers": "./src/stickers.js",
+    "./sticker-actions": "./src/sticker-actions.js",
+    "./sticker-migration": "./src/sticker-migration.js",
+    "./sticker-management": "./src/sticker-management.js"
+  },
+  "files": [
+    "src",
+    "vendor",
+    "README.md",
+    "REFERENCES.md",
+    "cordis.patch.yml",
+    "napcat"
+  ],
+  "engines": {
+    "node": ">=24.22.1 <25",
+    "dsh": "0.2.1-rc.3"
+  },
+  "dependencies": {
+    "ws": "8.22.0",
+    "@xzxzzx/bilibili-mcp": "1.14.5"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "name": "@ai-friend/bilibili-tool",
+  "version": "0.10.0",
+  "private": true,
+  "type": "module",
+  "description": "B站平台工具：收件箱、社交回复、账号操作、观看活动、待看续看、视频理解与内容发现；不持有人格副本或第二份记忆。",
+  "exports": {
+    ".": "./src/index.js",
+    "./agent": "./src/agent.js",
+    "./controller": "./src/controller.js",
+    "./offline": "./src/bilibili-offline.js",
+    "./video-offline": "./src/video-offline.js",
+    "./console-offline": "./src/console.js",
+    "./client": "./src/client.js",
+    "./activity-settings": "./src/activity-settings.js"
+  },
+  "files": [
+    "src",
+    "vendor",
+    "README.md",
+    "REFERENCES.md",
+    "ACTIVITY-REFERENCES.md",
+    "BILIBILI-INBOX-REFERENCES.md",
+    "SOCIAL-REFERENCES.md",
+    "VIDEO-REFERENCES.md",
+    "cordis.patch.yml"
+  ],
+  "engines": {
+    "node": ">=24.22.1 <25",
+    "dsh": "0.2.1-rc.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@xzxzzx/bilibili-mcp": "1.14.5",
+    "qrcode-generator": "2.0.4"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "build:client": "node ../../scripts/build-bilibili-client.mjs"
+  }
+}

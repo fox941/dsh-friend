@@ -1,0 +1,10 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {spawn} from 'node:child_process';
+import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
+import {hash} from './validation.js';
+const require=createRequire(import.meta.url);
+const dependency=async name=>import(pathToFileURL(path.join(path.dirname(require.resolve('@xzxzzx/bilibili-mcp')),name)));
+export async function runMedia(executable,args,{signal,timeoutMs=30000,maxOutput=65536}={}){signal?.throwIfAborted();return new Promise((resolve,reject)=>{const child=spawn(executable,args,{windowsHide:true,stdio:['ignore','pipe','pipe'],env:{SYSTEMROOT:process.env.SYSTEMROOT,PATH:process.env.PATH}});let output='',size=0,failed=false;const stop=reason=>{if(failed)return;failed=true;child.kill();reject(reason);};const timer=setTimeout(()=>stop(new Error('媒体处理超时')),timeoutMs);const abort=()=>stop(signal.reason??new Error('媒体处理取消'));signal?.addEventListener('abort',abort,{once:true});for(const stream of [child.stdout,child.stderr])stream.on('data',chunk=>{size+=chunk.length;if(size>maxOutput)return stop(new Error('媒体输出超出预算'));output+=chunk.toString();});child.on('error',()=>stop(new Error('媒体工具无法启动')));child.on('close',code=>{clearTimeout(timer);signal?.removeEventListener('abort',abort);if(!failed){if(code===0)resolve(output);else reject(new Error('媒体处理未完成，退出码 '+code));}});if(signal?.aborted)abort();});}
+export async function audioReadiness(instance){const root=path.resolve(instance,'../..','.tools/video'),ffmpeg=path.join(root,'ffmpeg.exe');try{const manifest=JSON.parse(await fs.readFile(path.join(root,'manifest.json'),'utf8'));if(hash(await fs.readFile(ffmpeg))!==manifest.dependencies.ffmpeg.sha256)throw Error();const {deriveAsrPaths,readAsrState}=await dependency('asr/state.js'),state=readAsrState(deriveAsrPaths(path.join(root,'asr')).stateFile);return {ready:true,asrReady:state.kind==='ready'&&state.deviceReadiness==='ready',ffmpeg,asrRoot:path.join(root,'asr')};}catch{return {ready:false,asrReady:false};}}

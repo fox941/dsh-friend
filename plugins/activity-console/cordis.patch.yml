@@ -1,0 +1,3 @@
+- insert:
+    - id: friend-activity-console
+      name: '@ai-friend/activity-console'

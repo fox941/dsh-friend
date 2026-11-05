@@ -1,0 +1,22 @@
+const hex=/^[a-f0-9]{64}$/;
+/** Read-only owner DTO. Does not initialize/migrate a pack, perform perception,
+ * poll QQ, or expose files, signed URLs, raw chat bodies or credentials. */
+export class StickerLibraryView{
+ constructor(library,{text=(v,n)=>typeof v==='string'?v.slice(0,n):'',writeEnabled=()=>true}={}){this.l=library;this.text=text;this.writeEnabled=writeEnabled;}
+ scope(){const b=this.l.channel.binding;if(!b?.bot_qq||!b?.owner_qq||!b?.session_id)return null;return {account:b.bot_qq,thread:b.session_id,peer:b.owner_qq,groupId:null};}
+ nativeFavorite(account,id){
+  const rows=this.l.store.db.prepare("SELECT id,updated_at FROM platform_operations WHERE action='qq_sticker_favorite' AND account=? AND json_extract(value_json,'$.args.stickerId')=? ORDER BY rowid DESC").all(account,id);if(!rows.length)return {status:'not_requested',confirmed:false,at:null,lastConfirmedAt:null};
+  const positive=rows.find(r=>{const op=this.l.store.operation(r.id);return op.verification?.verified===true&&(op.verification.state?.md5Matched===true||op.verification.state?.favorite===true)||op.status==='noop'&&op.before?.state?.alreadyFavorite===true;});
+  const latest=this.l.store.operation(rows[0].id);return {status:positive?'confirmed':latest.status,confirmed:Boolean(positive),at:rows[0].updated_at,lastConfirmedAt:positive?.updated_at??null,latestStatus:latest.status};
+ }
+ snapshot({query='',filter='all',offset=0,limit=24}={}){
+  if(typeof query!=='string'||query.length>120||!['all','enabled','disabled','unavailable'].includes(filter)||!Number.isSafeInteger(offset)||offset<0||offset>100000||!Number.isSafeInteger(limit)||limit<1||limit>48)throw Object.assign(Error('表情列表参数无效'),{status:400});
+  const scope=this.scope(),base={schema:'ai-friend/sticker-library/1',generatedAt:this.l.store.time(),configured:Boolean(scope),canManage:this.writeEnabled(),query,filter,offset,limit,notice:'停用只影响后续候选和提交；原图、收藏理由及QQ收藏栏保留。QQ状态为最近记录，不是实时查询。'};
+  if(!scope)return {...base,counts:{all:0,enabled:0,disabled:0,unavailable:0},total:0,items:[],hasMore:false};
+  const rows=this.l.rows(scope),mapped=rows.map(row=>{const control=this.l.controls.state(scope.account,row.id),sourceValid=this.l.shared.valid(row),visual=this.l.vision.view(row);return {row,control,sourceValid,visual};}),counts={all:rows.length,enabled:mapped.filter(i=>i.control.enabled&&i.sourceValid).length,disabled:mapped.filter(i=>!i.control.enabled).length,unavailable:mapped.filter(i=>!i.sourceValid).length},needle=query.normalize('NFKC').toLocaleLowerCase();
+  const selected=mapped.filter(i=>(filter==='all'||filter==='enabled'&&i.control.enabled&&i.sourceValid||filter==='disabled'&&!i.control.enabled||filter==='unavailable'&&!i.sourceValid)&&(!needle||[i.visual.description,...i.row.tags,...i.row.origins.map(o=>o.reason)].join(' ').normalize('NFKC').toLocaleLowerCase().includes(needle)));
+  return {...base,account:scope.account,counts,total:selected.length,hasMore:offset+limit<selected.length,items:selected.slice(offset,offset+limit).map(({row,control,sourceValid,visual})=>({stickerId:row.id,description:this.text(visual.description,500),tags:row.tags.map(t=>this.text(t,40)),animated:row.mediaType==='image/gif',mediaType:row.mediaType,bytes:row.bytes,collectedAt:row.createdAt,enabled:control.enabled,revision:control.revision,controlUpdatedAt:control.updatedAt,sourceValid,available:sourceValid&&control.enabled,previewUrl:sourceValid?'/api/ai-friend-sticker-image?id='+row.id:null,visualCoverage:visual.visualCoverage,temporalAnalysis:visual.temporalAnalysis?{changes:this.text(visual.temporalAnalysis.changes,500),certainty:visual.temporalAnalysis.certainty,sampledOnly:true}:null,origins:row.origins.map(o=>({scene:o.scope.groupId?'group':'private',groupId:o.scope.groupId??null,peer:o.scope.groupId?null:o.scope.peer,at:o.createdAt,reason:this.text(o.reason,400)})),nativeFavorite:this.nativeFavorite(scope.account,row.id)}))};
+ }
+ async image(id,signal){if(!hex.test(id??''))throw Object.assign(Error('表情标识无效'),{status:400});const scope=this.scope();if(!scope)throw Object.assign(Error('QQ尚未绑定'),{status:404});this.l.checkScope(scope);signal?.throwIfAborted();const asset=await this.l.shared.readAsset(scope,id);signal?.throwIfAborted();return asset;}
+ set(command){if(!this.writeEnabled())throw Object.assign(Error('当前实例未开放管理变更'),{status:403});const scope=this.scope();if(!scope)throw Object.assign(Error('QQ尚未绑定'),{status:409});return this.l.controls.set(scope,command);}
+}

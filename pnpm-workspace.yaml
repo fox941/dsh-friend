@@ -1,0 +1,9 @@
+minimumReleaseAgeExclude:
+  - '@mnemon-dev/mnemon@0.2.13-darwin-arm64 || 0.2.13-darwin-x64 || 0.2.13-linux-arm64 || 0.2.13-linux-x64 || 0.2.13-win32-arm64 || 0.2.13-win32-x64 || 0.2.13'
+allowBuilds:
+  '@deepseek-ai/dsh-subprocess-local@0.2.1-rc.3': true
+  'koffi@3.1.1': true
+  'node-pty@1.2.0-beta.15': true
+  'protobufjs@7.6.6': true
+  '@google/genai@2.21.0': false
+

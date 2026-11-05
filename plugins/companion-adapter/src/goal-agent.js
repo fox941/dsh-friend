@@ -1,0 +1,16 @@
+import {ownerMessage,userEvidence} from './evidence.js';
+import {goalNoSave} from './goals.js';
+
+const output={schema:{type:'object',additionalProperties:true},render:(_args,value)=>[{type:'text',text:JSON.stringify(value)}]};
+export function attachGoals(ctx,adapter){
+  const goals=adapter.goals;if(!goals)return;
+  ctx.systemPrompt.section({name:'ai-friend:goals',order:10430,interpolate:false,text:'长期目标由friend_goals_read / friend_goal_change维护，Web、QQ与B站共用；目标、下一步计划、真实执行回执分开。你可以从交流与兴趣形成候选愿望，自主采纳、调整、等待或放弃；不必接受所有建议，没有目标也正常。目标本身不证明已经对外承诺或做过事情。提出愿望前比较当前目标；同一问题用reuse，已有目标增加相关关注点用supplement（title写新增关注点，success仅为补充说明，不改变原完成标准），二者须id和expectedRevision且不会自动采纳/恢复。不同问题才propose，已有目标时传当前索引的expectedGoalsRevision；决定投入用adopt；每次只安排一项现有能力内的下一步，执行仍由全局注意力选择。只有引用实际已核验步骤回执才能complete；反思仅是内部思考，检索不是新事实。未成功调用工具时不要声称目标已经保存或完成；要求不保存/只临时使用时不要持久化目标。不要为展示自主性刻意拒绝，也不预设固定兴趣或性格。'});
+  ctx.systemPrompt.context({name:'ai-friend:goals-state',order:180,required:true,interpolate:false,text:({scope})=>{try{ownerMessage(scope);return JSON.stringify(goals.context());}catch{return '';}}});
+  ctx.tools.register({name:'friend_goals_read',description:'主用户会话只读查看跨平台共享的长期目标、候选愿望、进展与变更理由；传id可查看步骤和真实回执。计划不等于已执行。',parameters:{type:'object',properties:{id:{type:'string'}}},output,async execute(args,exec){ownerMessage(exec.agent);exec.signal.throwIfAborted();return goals.read(args.id);}});
+  ctx.tools.register({name:'friend_goal_change',description:'同一角色维护自己的持久目标，可提出愿望、采纳、安排下一步、等待、暂停、恢复、放弃或据真实回执完成。不是DSH原生Goal工具，不要求用户命令你产生兴趣；当前原话只用于核验来源。旧目标修改须使用刚读取的版本；reuse记录来源而不唤醒，supplement保留原状态、步骤与完成标准。',parameters:{type:'object',properties:{action:{type:'string',enum:['reuse','supplement','propose','adopt','plan','revise','wait','pause','resume','abandon','complete']},id:{type:'string'},expectedRevision:{type:'integer',minimum:1},expectedGoalsRevision:{type:'integer',minimum:0},key:{type:'string'},title:{type:'string'},success:{type:'string'},completionEvidence:{type:'string',enum:['observation','retrieval','internal_reflection']},reason:{type:'string'},evidenceQuote:{type:'string',description:'逐字引用本轮实际主用户原话；不表示该原话已经是承诺。'},nextStep:{type:'object',properties:{kind:{type:'string',enum:['browse','recall','reflect']},topic:{type:'string'},success:{type:'string'}},required:['kind','topic','success'],additionalProperties:false},wake:{type:'object',properties:{kind:{type:'string',enum:['time','event','task_end','state_change','change']},afterSeconds:{type:'integer',minimum:60,maximum:604800}},required:['kind'],additionalProperties:false},evidenceIds:{type:'array',items:{type:'string'},maxItems:8}},required:['action','reason','evidenceQuote'],additionalProperties:false},output,async execute(args,exec){
+    const evidence=userEvidence(exec.agent,args.evidenceQuote),event=ownerMessage(exec.agent),raw=(event.data.content??[]).filter(row=>row.type==='text').map(row=>row.text).join('\n');
+    if(goalNoSave(raw))throw new Error('本轮要求不保存、仅临时使用或属于测试，未持久化目标');
+    exec.signal.throwIfAborted();const {evidenceQuote,...change}=args;
+    return goals.change(change,{kind:'owner_conversation',id:`${evidence.sessionId}:${evidence.messageId}`,quote:evidenceQuote,privacy:'owner',channel:event.data.source?.principal?'qq':'web',independentEvidence:false},'conversation');
+  }});
+}

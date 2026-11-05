@@ -1,0 +1,5 @@
+import path from 'node:path';import {createRequire} from 'node:module';import {pathToFileURL} from 'node:url';import {DatabaseSync} from 'node:sqlite';import {instanceRoot} from './paths.mjs';
+const require=createRequire(path.join(instanceRoot,'dsh-home/profiles/web/package.json')),base=path.dirname(require.resolve('@ai-friend/companion-adapter')),{PlatformStore}=await import(pathToFileURL(base+'/platform-store.js')),{platformResultView}=await import(pathToFileURL(require.resolve('@ai-friend/companion-adapter/platform-results'))),operationId=process.argv[2];
+if(operationId!==undefined&&!/^[a-f0-9-]{36}$/i.test(operationId))throw Error('需要完整操作ID');
+const db=new DatabaseSync(path.join(instanceRoot,'companion/companion.sqlite'),{readOnly:true,timeout:1000});
+try{const store=Object.assign(Object.create(PlatformStore.prototype),{db}),ids=operationId?[operationId]:db.prepare('SELECT id FROM platform_operations ORDER BY rowid DESC LIMIT 12').all().map(r=>r.id);console.log(JSON.stringify({operations:ids.map(id=>platformResultView(db,store.operation(id))).filter(Boolean),scope:'只读本地回执，不调用平台，不发送或重试；人工开发验收记录独立保存。'},null,2));}finally{db.close();}

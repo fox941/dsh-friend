@@ -1,0 +1,22 @@
+import {instanceId} from './paths.mjs';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { projectRoot } from './paths.mjs';
+
+const directory = path.join(projectRoot, '.work', ...(instanceId==='test'?['test']:[]), `native-check-${crypto.randomUUID()}`);
+await fs.mkdir(directory, { recursive: true });
+const draft = path.join(directory, 'draft.json');
+const entries = Array.from({ length: 1002 }, (_, index) => ({ content: `fixture_${crypto.randomUUID()}`, category: 'general', importance: 1, created_at: new Date(Date.UTC(2020, 0, 1) + index * 172800000).toISOString() }));
+await fs.writeFile(draft, JSON.stringify({ schema_version: '1', source: 'development-retention-check', insights: entries }));
+const binary = path.join(projectRoot, '.tools', 'mnemon-0.2.13', 'mnemon.exe');
+const environment = { ...process.env, MNEMON_MAX_INSIGHTS: '0', MNEMON_EMBED_ENDPOINT: 'http://127.0.0.1:9', MNEMON_EMBED_PROTOCOL: 'ollama' };
+const run = args => JSON.parse(execFileSync(binary, ['--data-dir', path.join(directory, 'data'), ...args], { env: environment, windowsHide: true, encoding: 'utf8', timeout: 60000, maxBuffer: 8 * 1024 * 1024 }));
+const imported = run(['import', '--no-diff', draft]);
+const repeated = run(['remember', entries[0].content]);
+const status = run(['status']);
+if (imported.imported !== 1002 || imported.auto_pruned !== 0 || repeated.action !== 'skipped' || status.total_insights !== 1002 || status.deleted_insights !== 0) throw new Error('Native retention/dedup acceptance failed');
+const result = { checkedAt: new Date().toISOString(), cliVersion: '0.2.13', imported: imported.imported, autoPruned: imported.auto_pruned, duplicateAction: repeated.action, status, testDirectory: directory, usesProductionData: false };
+await fs.writeFile(path.join(projectRoot, '.work', ...(instanceId==='test'?['test']:[]), 'native-check-result.json'), JSON.stringify(result, null, 2));
+console.log(JSON.stringify(result));

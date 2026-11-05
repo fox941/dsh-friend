@@ -1,0 +1,13 @@
+- insert:
+    - id: friend-memory-strategy
+      name: '@ai-friend/companion-adapter/memory-strategy'
+    - id: friend-adapter
+      name: '@ai-friend/companion-adapter'
+      config:
+        writeEnabled: true
+        nightly:
+          enabled: true
+          time: '02:00'
+          timeZone: Asia/Shanghai
+        configuredChannels:
+          - web

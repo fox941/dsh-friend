@@ -1,0 +1,32 @@
+{
+  "name": "@ai-friend/attention-scheduler",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "DSH调度服务：XState串行执行准入、决策调用与可恢复任务状态；不持有人格或平台凭据。",
+  "exports": {
+    ".": "./src/index.js",
+    "./controller": "./src/controller.js",
+    "./store": "./src/store.js",
+    "./runtime": "./src/runtime.js",
+    "./offline": "./src/offline.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "REFERENCES.md",
+    "cordis.patch.yml"
+  ],
+  "engines": {
+    "node": ">=24.22.1 <25",
+    "dsh": "0.2.1-rc.3"
+  },
+  "dependencies": {
+    "xstate": "5.33.3"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
