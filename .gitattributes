@@ -1,0 +1,4 @@
+# Runtime packaging and update guards verify exact file bytes.
+# Preserve original source bytes across Windows and other Git clients.
+# This disables EOL conversion; normal text diffs and merges remain enabled.
+* -text
