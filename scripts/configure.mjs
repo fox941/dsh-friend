@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { applyEnvironment, instanceRoot, projectRoot } from './paths.mjs';
 import {requireMain} from './instances.mjs';
+import {ensureCompanionWeb} from './companion-web.mjs';
 
 requireMain('共享工具和主配置初始化；测试配置请用 Setup-Test');
 applyEnvironment();
@@ -64,6 +65,7 @@ override('mnemon', { disabled: false, config: {
 } });
 override('mnemon-source-skills', { disabled: true });
 override('mnemon-source-memory-spaces', { config: { providers: [{ use: 'dsh-mnemon-provider-mnemon-native', instanceId: 'mnemon-native' }] } });
+ensureCompanionWeb(patches);
 await fs.writeFile(patchFile, yaml.dump(patches, { lineWidth: 120, noRefs: true }), { mode: 0o600 });
 await fs.mkdir(path.join(instanceRoot, 'workspace'), { recursive: true });
 await fs.writeFile(marker, JSON.stringify({ schema: 'ai-friend-bootstrap/1', createdAt: new Date().toISOString(), dsh: '0.2.1-rc.3', mnemon: '0.5.36', native: '0.2.13', preset: 'companion', configuredRoot: instanceRoot }, null, 2));

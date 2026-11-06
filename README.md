@@ -1,3 +1,5 @@
+联网接入更新（2026-11-06）：陪伴预设已补入 DSH 内置 web_search／web_fetch，复用现有凭据与匿名公开网页读取。对话内按需使用；空闲网页阅读后台执行器与自主工作设置表单仍待开发。见[联网说明](docs/web-access.md)。
+
 当前进度（2026-11-06）：0.78.1／活动中心0.3.1 已接自主写作与工具制作，复用统一选择与检查点；默认每天6个投入任务、24次模型步骤，脚本沿用128次。详见 [自主工作](docs/workshop-autonomy.md)，发布结果以 `.work/workshop-autonomy-release.json` 为准。
 
 当前进度（2026-11-06）：companion-adapter 0.77.1 已接专属文件工作间与自制 JavaScript 工具；先试跑再注册，经统一入口调用。原记忆、人格和平台能力沿用。说明见 [文件工作间与自制工具](docs/workshop.md)，正式状态以 `.work/workshop-release.json` 为准。

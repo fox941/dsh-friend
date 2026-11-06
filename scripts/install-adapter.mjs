@@ -3,6 +3,7 @@ import {installQQBridge} from './install-qq-bridge.mjs';
 import {installBilibiliTool} from './install-bilibili-tool.mjs';
 import {installScheduler} from './install-scheduler.mjs';
 import {assertOffline} from './archive.mjs';
+import {ensureCompanionWeb} from './companion-web.mjs';
 import fs from 'node:fs/promises';
 import {installQQHelper} from './install-qq-helper.mjs';
 import path from 'node:path';
@@ -86,6 +87,7 @@ export async function installAdapter({projectRoot,instanceRoot,sourceDirectory=p
   if(mnemon?.config?.memoryView?.strategyTypeId==='default-three-tier'){
     mnemon.config.memoryView.strategyTypeId='friend-three-tier';presetChanged=true;
   }
+  if(ensureCompanionWeb(patches,{instance:process.env.AI_FRIEND_INSTANCE??'main'}))presetChanged=true;
   if(presetChanged)await fs.writeFile(patchFile,yaml.dump(patches,{lineWidth:120,noRefs:true}));
   const qqHelper=await installQQHelper({projectRoot,instanceRoot});
   return {name,version,installed:!same,sourceDigest,profile,scheduler,qqBridge,bilibiliTool,activityConsole,qqHelper};
