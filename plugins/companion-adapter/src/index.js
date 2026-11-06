@@ -1,3 +1,4 @@
+import {WorkshopAutonomy} from './workshop-autonomy.js';
 import {Workshop} from './workshop.js';
 import {attachActivityConsoleHost} from './activity-console-host.js';
 import {attachStickerLibraryHost} from './sticker-library-host.js';
@@ -124,6 +125,7 @@ export async function apply(ctx,config={}) {
   controller.attention=ctx.friendScheduler.create({validateDecision:validateAttention,validateData:noSecret,journal:controller.journal,config:config.attention,diagnostics:controller.diagnostics});
   controller.bilibili.attention=controller.attention;
   controller.attentionAffect=new AttentionAffect({attention:controller.attention,growth:controller.growth});
+  if(controller.workshop){controller.workshopAutonomy=new WorkshopAutonomy(controller,{config:config.workshopAutonomy});controller.attentionCapabilities.push(controller.workshopAutonomy.capability());}
   controller.goals=new GoalController({journal:controller.journal,attention:controller.attention,activities:controller.activities,writeEnabled:()=>config.writeEnabled!==false,config:config.goals});
   controller.bilibiliSocial.goals=controller.goals;
   controller.proactive=new ProactiveController(controller,{config:config.proactive,writeEnabled:()=>config.writeEnabled!==false});
@@ -152,5 +154,5 @@ export async function apply(ctx,config={}) {
   attachAttentionHost(ctx,controller);
   attachNightlyHost(ctx,controller);
   attachQQHost(ctx,controller);
-  ctx.effect(()=>async()=>{await controller.workshop?.close();await controller.socialExperience.close();await controller.profileNotices.close();await controller.profileChanges.close();await controller.profileSummary.close();await controller.attention.close();await controller.platforms.close();await controller.bilibili.close();await controller.qq.close();await controller.nightly.close();await Promise.allSettled([controller.applications.close(),controller.preview.close(),controller.growth.close()]);controller.diagnostics.close();await controller.close();},'ai-friend: state, preview and correction journal');
+  ctx.effect(()=>async()=>{await controller.workshopAutonomy?.close();await controller.workshop?.close();await controller.socialExperience.close();await controller.profileNotices.close();await controller.profileChanges.close();await controller.profileSummary.close();await controller.attention.close();await controller.platforms.close();await controller.bilibili.close();await controller.qq.close();await controller.nightly.close();await Promise.allSettled([controller.applications.close(),controller.preview.close(),controller.growth.close()]);controller.diagnostics.close();await controller.close();},'ai-friend: state, preview and correction journal');
 }

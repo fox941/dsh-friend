@@ -1,3 +1,4 @@
+import {workshopStepPolicy} from './workshop-autonomy-policy.js';
 import {NightlyMaterials} from './nightly-materials.js';
 import {IntentReuse} from './intent-reuse.js';
 import {eligibleHeader} from './preview-sessions.js';
@@ -23,6 +24,7 @@ export function attachAttentionHost(ctx,adapter){
   ctx.inject(['agents','agentPresets','agentDefaultModel','sessionPersistence','llm'],bound=>{
     const get=name=>bound.get?.(name)??bound[name],agents=get('agents'),persistence=get('sessionPersistence'),handles=new Map();
     const affect=adapter.attentionAffect;
+    adapter.workshopAutonomy?.bind({step:(frame,signal)=>reviewStructured(get('llm'),null,frame,signal,{route:get('agentDefaultModel').currentSelection(),label:'自主工作',maxTokens:8192,policy:workshopStepPolicy})});
     adapter.proactive?.bind({state:async()=>({self:adapter.growth.context(),feelings:adapter.growth.emotions.context(),goals:adapter.goals?.context(),recentOwnerMessages:attention.store.recent(30).filter(r=>r.kind==='message'&&r.scope==='owner'&&!goalNoSave(words(r.payload.message))).slice(0,3).map(r=>({channel:r.payload.channel,text:words(r.payload.message).slice(0,500)}))}),review:(role,frame,signal)=>reviewProactive(get('llm'),get('agentDefaultModel').currentSelection(),role,frame,signal)});
     affect?.bind({
       async source(row,record){const id=row.payload.sessionId,header=row.kind==='message'?(agents.get(id)?.session.header??(await persistence.stat(id))?.header):null;return perceptionSource(adapter,row,record,header);},
@@ -75,7 +77,7 @@ export function attachAttentionHost(ctx,adapter){
       preview:row=>{for(const cap of caps){const value=cap.preview?.(row);if(value!==undefined)return value;}if(row.kind==='proactive')return adapter.proactive?.preview?.(row)??null;if(row.payload.platformActionId||row.payload.platformEventId)return adapter.platforms.preview(row);for(const cap of caps){const value=cap.preview?.(row);if(value!==undefined)return value;}return row.kind==='message'?words(row.payload.message).slice(0,700):row.payload.topic??null;},
       perception:affect?(row,preview)=>affect.describe(row,preview):undefined,
       afterDecision:({frame,decision,call})=>{affect?.capture({frame,decision,call});if(adapter.goals)try{adapter.goals.capture(decision.goals,frame.goalSources??[],call,frame.longTermGoals);adapter.goals.lastError=null;}catch(error){adapter.goals.lastError=adapter.goals.safe(error);}},
-      captureSuggestions:input=>ideas.apply(input),
+      captureSuggestions:input=>{const results=ideas.apply({...input,decision:{...input.decision,suggestions:input.decision.suggestions.filter(p=>p.kind!=='workshop')}});adapter.workshopAutonomy?.capture(input);return results;},
       affectStatus:()=>affect?.status()??null,
       closeEffects:()=>affect?.active,
       review:(frame,signal)=>reviewAttention(get('llm'),get('agentDefaultModel').currentSelection(),frame,signal),

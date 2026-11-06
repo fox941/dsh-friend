@@ -1,6 +1,6 @@
 {
   "name": "@ai-friend/activity-console",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "description": "统一活动中心：选择、待办、执行回执、资源与受控活动配置。",

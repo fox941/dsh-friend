@@ -1,6 +1,6 @@
 import * as z from 'zod';
 
-export const attentionProtocolVersion='2';
+export const attentionProtocolVersion='3';
 const reason=z.string().min(1).max(700).describe('简短依据，不能只含空白，不输出内部推理过程');
 const wake=z.union([
  z.object({kind:z.literal('time'),afterSeconds:z.number().int().min(30).max(86400)}).strict(),
@@ -14,7 +14,7 @@ export function attentionSchema(ids=[],routingIds=[]){
   z.object({id:candidate,action:z.literal('defer'),reason,wake}).strict(),
   z.object({id:candidate,action:z.literal('dismiss'),reason,wake:wake.nullable().optional()}).strict()
  ]);
- const shape={reason,updates:z.array(update).max(32).optional().describe('可省略；每个ID最多一次，start目标不能同时出现在这里'),suggestions:z.array(z.object({kind:z.enum(['browse','recall','reflect']),topic:z.string().min(1).max(160),reason,resolution:z.enum(['new','reuse','supplement']).optional(),targetId:z.string().min(1).optional(),expectedRevision:z.string().min(1).optional(),mergeFrom:z.object({id:z.string().min(1),revision:z.string().min(1)}).strict().optional()}).strict()).max(2).optional(),affect:z.unknown().optional().describe('可选情绪提案，保持原独立审核；本字段不直接改变状态'),goals:z.array(z.unknown()).max(1).optional().describe('可选目标提案，保持原来源及权限审核')};
+ const shape={reason,updates:z.array(update).max(32).optional().describe('可省略；每个ID最多一次，start目标不能同时出现在这里'),suggestions:z.array(z.object({kind:z.enum(['browse','recall','reflect','workshop']),topic:z.string().min(1).max(160),reason,resolution:z.enum(['new','reuse','supplement']).optional(),targetId:z.string().min(1).optional(),expectedRevision:z.string().min(1).optional(),mergeFrom:z.object({id:z.string().min(1),revision:z.string().min(1)}).strict().optional()}).strict()).max(2).optional(),affect:z.unknown().optional().describe('可选情绪提案，保持原独立审核；本字段不直接改变状态'),goals:z.array(z.unknown()).max(1).optional().describe('可选目标提案，保持原来源及权限审核')};
  return z.discriminatedUnion('action',[
   z.object({...shape,action:z.literal('start'),targetId:candidate,executionTarget:z.enum(['bilibili_video','external_document']).optional().describe('当目标executionRouting.required=true时必须填写，明确是B站视频还是网页/论文文档；不能以教程代替文档')}).strict(),
   z.object({...shape,action:z.literal('continue'),targetId:z.null().optional()}).strict(),
@@ -29,6 +29,7 @@ export function attentionSchema(ids=[],routingIds=[]){
    if(g.action==='supplement'&&!g.title)ctx.addIssue({code:'custom',path:['goals',i,'title'],message:'补充目标必须说明新增关注点'});
   }
   for(const [i,s]of(value.suggestions??[]).entries()){if(['reuse','supplement'].includes(s.resolution)&&(!s.targetId||!s.expectedRevision))ctx.addIssue({code:'custom',path:['suggestions',i],message:'复用需要本轮待办ID和版本'});if(s.resolution==='new'&&(s.targetId||s.expectedRevision||s.mergeFrom))ctx.addIssue({code:'custom',path:['suggestions',i],message:'新建不能夹带旧事项修改'});if(value.action==='start'&&(s.targetId===value.targetId||s.mergeFrom?.id===value.targetId))ctx.addIssue({code:'custom',path:['suggestions',i],message:'本轮已选择执行的事项不重复复用或合并'});}
+  if((value.suggestions??[]).filter(s=>s.kind==='workshop').length>1)ctx.addIssue({code:'custom',path:['suggestions'],message:'每次最多一项自主工作提案'});
   const used=new Set();for(const [i,row]of(value.updates??[]).entries()){
    if(!ids.includes(row.id)||used.has(row.id)||row.id===value.targetId)ctx.addIssue({code:'custom',path:['updates',i,'id'],message:'事项ID必须属于本批、不能重复，也不能是本次start目标'});
    used.add(row.id);

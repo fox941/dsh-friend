@@ -6,7 +6,7 @@ import {readToolDiagnostics} from './diagnostics-tools.js';
 const json=s=>{try{return s?JSON.parse(s):null;}catch{return null;}};
 const updates=d=>Array.isArray(d?.updates)?d.updates.filter(u=>u&&typeof u==='object'&&!Array.isArray(u)):[];
 const moment=value=>{const n=typeof value==='number'?value:Date.parse(value);return Number.isFinite(n)?new Date(n).toISOString():null;};
-const kindLabel={message:'聊天消息',browse:'浏览与探索',bilibili:'B站消息',recall:'回忆',reflect:'内部反思',nightly:'记忆整理',proactive:'主动联系',goal:'目标规划'};
+const kindLabel={message:'聊天消息',browse:'浏览与探索',bilibili:'B站消息',recall:'回忆',reflect:'内部反思',nightly:'记忆整理',proactive:'主动联系',goal:'目标规划',workshop:'写作与工具制作'};
 const phaseLabel={started:'任务开始',target_selected:'已选定视频',observation_saved:'实际观察已保存',reflection_saved:'反思记录已保存',memory_processed:'记忆处理已完成',growth_processed:'自我认识处理已完成','video:choose-window':'选择观察片段','video:language':'读取片段语言','video:frames':'采样画面','video:vision':'理解采样画面','video:segment-saved':'片段观察已保存'};
 const callLabel={selection:'行为选择',expression:'表达',emotion:'感受审核',reflection:'反思',growth:'成长审核',memory:'记忆处理',activity:'浏览活动',goal:'目标规划',proactive:'主动联系',session_other:'会话调用'};
 
@@ -50,7 +50,7 @@ export class BehaviorView {
  }
  resources(){
   let video=null;try{const r=this.a.activities?.resources?.();if(r)video={enabled:r.enabled,automaticEnabled:r.automaticEnabled,automatic:r.automatic?{decisions:r.automatic.decisions,decisionLimit:r.automatic.decisionLimit,explorations:r.automatic.explorations,explorationLimit:r.automatic.explorationLimit,nextAfterCooldown:moment(r.automatic.nextAfterCooldown)}:null,manual:r.manual?{used:r.manual.used,limit:r.manual.limit,nextAfterCooldown:moment(r.manual.nextAfterCooldown)}:null};}catch{}
-  const used=this.a.growth.store.budget(),limit=this.a.growth.config.dailyReviewLimit;return {video,growth:{used,limit,remaining:Math.max(0,limit-used)},notice:'资源数值与已记录的等待原因分别看待；额度不足不自动证明某条消息因此未处理'};
+  const used=this.a.growth.store.budget(),limit=this.a.growth.config.dailyReviewLimit;return {video,workshop:this.a.workshopAutonomy?.resources()??null,growth:{used,limit,remaining:Math.max(0,limit-used)},notice:'资源数值与已记录的等待原因分别看待；额度不足不自动证明某条消息因此未处理'};
  }
  runFor(row){const p=row.payload??{};if(UUID.test(p.runId??''))return p.runId;if(UUID.test(p.requestId??'')&&this.has('activity_requests'))return this.db.prepare('SELECT run_id FROM activity_requests WHERE id=?').get(p.requestId)?.run_id??null;if(UUID.test(row.result?.activityId??''))return row.result.activityId;const active=this.a.activities?.active;return active?.attentionId===row.id?active.id??null:null;}
  video(runId){
@@ -69,7 +69,7 @@ export class BehaviorView {
  sourceSQL(alias='i'){
   const p="(CASE WHEN json_valid("+alias+".payload_json) THEN "+alias+".payload_json ELSE '{}' END)",j=key=>"json_extract("+p+",'$."+key+"')";
   const channels=(this.consoleSources?.()??[{id:'qq'},{id:'web'},{id:'bilibili'}]).map(s=>s.id).filter(id=>/^[a-z][a-z0-9_-]{0,59}$/.test(id));
-  return "CASE WHEN "+j('channel')+" IN ("+channels.map(id=>"'"+id+"'").join(',')+") THEN "+j('channel')+" WHEN "+j('platformEventId')+" IS NOT NULL OR "+j('socialExperienceId')+" IS NOT NULL THEN 'qq' WHEN "+j('platformActionId')+" IS NOT NULL THEN "+(this.has('platform_operations')?"coalesce((SELECT CASE WHEN substr(action,1,3)='qq_' THEN 'qq' WHEN substr(action,1,5)='bili_' THEN 'bilibili' ELSE 'unknown' END FROM platform_operations WHERE id="+j('platformActionId')+"),'unknown')":"'unknown'")+" WHEN "+alias+".kind IN ('browse','bilibili') THEN 'bilibili' WHEN "+j('profileNoticeId')+" IS NOT NULL THEN 'unknown' WHEN "+alias+".kind='proactive' THEN 'qq' WHEN "+alias+".kind IN ('reflect','recall','nightly','goal') THEN 'internal' ELSE 'unknown' END";
+  return "CASE WHEN "+j('channel')+" IN ("+channels.map(id=>"'"+id+"'").join(',')+") THEN "+j('channel')+" WHEN "+j('platformEventId')+" IS NOT NULL OR "+j('socialExperienceId')+" IS NOT NULL THEN 'qq' WHEN "+j('platformActionId')+" IS NOT NULL THEN "+(this.has('platform_operations')?"coalesce((SELECT CASE WHEN substr(action,1,3)='qq_' THEN 'qq' WHEN substr(action,1,5)='bili_' THEN 'bilibili' ELSE 'unknown' END FROM platform_operations WHERE id="+j('platformActionId')+"),'unknown')":"'unknown'")+" WHEN "+alias+".kind IN ('browse','bilibili') THEN 'bilibili' WHEN "+j('profileNoticeId')+" IS NOT NULL THEN 'unknown' WHEN "+alias+".kind='proactive' THEN 'qq' WHEN "+alias+".kind IN ('reflect','recall','nightly','goal','workshop') THEN 'internal' ELSE 'unknown' END";
  }
  consoleTask(row){const out=this.brief(row),source=this.db.prepare('SELECT '+this.sourceSQL()+' source FROM attention_intents i WHERE i.id=?').get(row.id)?.source??'unknown',run=this.runFor(row);return {...out,source,link:source==='bilibili'?{panel:'bilibili',kind:run?'task':'overview',id:run}:null};}
  consoleSnapshot({section='overview',source='all',kind='all',status='all',limit=24,offset=0,refKind,refId}={}){
@@ -106,7 +106,7 @@ export class BehaviorView {
   output.items=rows.map(r=>section==='choices'?this.decision(r):this.consoleTask(this.row(r.id)));output.paging={offset,limit,total,hasMore:offset+rows.length<total};output.filters={source,kind,status,refKind:refKind??null,refId:refId??null};
   return output;
  }
- consoleDetail(kind,id){const result=this.detail(kind,id);if(!result)return null;if(kind==='intent')result.task=this.consoleTask(this.row(id));return result;}
+ consoleDetail(kind,id){const result=this.detail(kind,id);if(!result)return null;if(kind==='intent'){const row=this.row(id);result.task=this.consoleTask(row);if(row?.payload?.workshopTaskId&&this.a.workshopAutonomy)result.workshop=this.a.workshopAutonomy.read(row.payload.workshopTaskId);}return result;}
 
  snapshot(){
  if(!this.has('attention_intents')||!this.has('attention_decisions'))return {available:false,notice:'当前实例尚无可读取的统一调度记录'};

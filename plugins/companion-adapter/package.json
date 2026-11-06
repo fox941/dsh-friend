@@ -1,6 +1,6 @@
 {
   "name": "@ai-friend/companion-adapter",
-  "version": "0.77.1",
+  "version": "0.78.1",
   "private": true,
   "type": "module",
   "description": "陪伴运行适配：主用户QQ私聊、统一记忆、有据成长、多项情绪与心境、夜间整理和可恢复保护。",
@@ -42,7 +42,7 @@
     "@ai-friend/attention-scheduler": "0.3.0",
     "@ai-friend/qq-bridge": "0.20.0",
     "@ai-friend/bilibili-tool": "0.10.0",
-    "@ai-friend/activity-console": "0.2.0"
+    "@ai-friend/activity-console": "0.3.1"
   },
   "dependencies": {
     "ws": "8.22.0",
