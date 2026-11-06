@@ -20,6 +20,7 @@ export function companionRuntimeHealth(adapter,now=Date.now()){
   socialExperience:adapter.socialExperience?.status()??null,
   profileChanges:{hostReady:Boolean(adapter.profileChanges?.host),running:Boolean(adapter.profileChanges?.active),issue:Boolean(adapter.profileChanges?.lastError)},
   profileNotices:{hostReady:Boolean(adapter.profileNotices?.host),running:Boolean(adapter.profileNotices?.active),issue:Boolean(adapter.profileNotices?.lastError)},
+  workshop:adapter.workshop?{enabled:adapter.workshop.status().enabled,running:Boolean(adapter.workshop.running),registeredTools:adapter.workshop.status().registered.length}:null,
   models:adapter.diagnostics.progress(),
   activity:{running:Boolean(adapter.activities.active),paused:Boolean(adapter.activities.active?.paused)},
   scope:'只读技术状态；主动沉默、安静、暂停或等待不属于故障，不修改行为优先级、记忆或发送回执'};

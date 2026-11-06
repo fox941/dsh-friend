@@ -1,3 +1,5 @@
+当前进度（2026-11-06）：companion-adapter 0.77.1 已接专属文件工作间与自制 JavaScript 工具；先试跑再注册，经统一入口调用。原记忆、人格和平台能力沿用。说明见 [文件工作间与自制工具](docs/workshop.md)，正式状态以 `.work/workshop-release.json` 为准。
+
 <!-- video-continuous -->
 连续视频理解：companion-adapter 0.71.1 / bilibili-tool 0.5.1已部署。原观看工具可选continuous模式，分批按时间覆盖、每窗默认12张真实PTS画面、字幕编号联合时序理解、断点续看与整片章节；沿用原注意力和日额度。源码与实际安装包各646项相关回归通过，隔离真实200秒视频两批/48帧/整片章节通过；不是原生声音语气或逐帧理解。[使用与边界](docs/video-continuous-understanding.md)。
 <!-- /video-continuous -->

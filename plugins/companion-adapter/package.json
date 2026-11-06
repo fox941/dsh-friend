@@ -1,6 +1,6 @@
 {
   "name": "@ai-friend/companion-adapter",
-  "version": "0.76.0",
+  "version": "0.77.1",
   "private": true,
   "type": "module",
   "description": "陪伴运行适配：主用户QQ私聊、统一记忆、有据成长、多项情绪与心境、夜间整理和可恢复保护。",
@@ -46,7 +46,9 @@
   },
   "dependencies": {
     "ws": "8.22.0",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "quickjs-emscripten-core": "0.32.0",
+    "@jitl/quickjs-wasmfile-release-sync": "0.32.0"
   },
   "dsh": {
     "client": {

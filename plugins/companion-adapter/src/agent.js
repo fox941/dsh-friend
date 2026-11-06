@@ -1,3 +1,4 @@
+import {attachWorkshop} from './workshop-agent.js';
 import {attachPersonProfiles} from './person-profiles-agent.js';
 import {attachRecall} from './recall-agent.js';
 import {attachReplyIntegrity} from './reply-integrity.js';
@@ -40,6 +41,7 @@ function attach(ctx) {
       activeNativeSpaces:policy.spaces.filter(space=>space.active).map(space=>({id:space.id,name:space.name,hasSavedRecords:adapter.client.presence(space.id)})),
       savedContentBoundary:'hasSavedRecords=true 证明该激活长期空间存在有效记录，false 表示检查时为空，null 表示未知。常驻画像为空不代表长期资料为空，也不能据此宣称换会话后所有资料都会消失。这不证明记录均为真实用户个人资料；具体内容必须召回核对。',
       pendingCorrections:adapter.status(),
+      workshop:adapter.workshop?.status()??null,
       conversationMemory:adapter.conversations?.status()??null,socialExperience:adapter.socialExperience?.status()??null,
       qq:adapter.qq?.status()??null,
       bilibiliInbox:adapter.bilibiliInbox?.status()??null,
@@ -87,5 +89,5 @@ function attach(ctx) {
   attachQQAgent(ctx,adapter);attachPlatforms(ctx,adapter);
   attachAttentionAgent(ctx,adapter);
   attachGoals(ctx,adapter);
-  attachProactive(ctx,adapter);
+  attachProactive(ctx,adapter);attachWorkshop(ctx,adapter);
 }

@@ -1,3 +1,4 @@
+import {Workshop} from './workshop.js';
 import {attachActivityConsoleHost} from './activity-console-host.js';
 import {attachStickerLibraryHost} from './sticker-library-host.js';
 import {attachSelfStateHost} from './self-state-host.js';
@@ -118,6 +119,7 @@ export async function apply(ctx,config={}) {
   controller.activityRequests=controller.bilibili.activityRequests;
   controller.attentionCapabilities=[controller.bilibili.capability];
   controller.workspace=path.join(instance,'workspace');
+  if(process.env.AI_FRIEND_INSTANCE!=='test'){controller.workshop=new Workshop({instance,enabled:()=>config.writeEnabled!==false&&config.workshop?.enabled!==false,validate:noSecret});await controller.workshop.ready;}
   controller.diagnostics=new Diagnostics({journal:controller.journal,config:config.diagnostics});
   controller.attention=ctx.friendScheduler.create({validateDecision:validateAttention,validateData:noSecret,journal:controller.journal,config:config.attention,diagnostics:controller.diagnostics});
   controller.bilibili.attention=controller.attention;
@@ -150,5 +152,5 @@ export async function apply(ctx,config={}) {
   attachAttentionHost(ctx,controller);
   attachNightlyHost(ctx,controller);
   attachQQHost(ctx,controller);
-  ctx.effect(()=>async()=>{await controller.socialExperience.close();await controller.profileNotices.close();await controller.profileChanges.close();await controller.profileSummary.close();await controller.attention.close();await controller.platforms.close();await controller.bilibili.close();await controller.qq.close();await controller.nightly.close();await Promise.allSettled([controller.applications.close(),controller.preview.close(),controller.growth.close()]);controller.diagnostics.close();await controller.close();},'ai-friend: state, preview and correction journal');
+  ctx.effect(()=>async()=>{await controller.workshop?.close();await controller.socialExperience.close();await controller.profileNotices.close();await controller.profileChanges.close();await controller.profileSummary.close();await controller.attention.close();await controller.platforms.close();await controller.bilibili.close();await controller.qq.close();await controller.nightly.close();await Promise.allSettled([controller.applications.close(),controller.preview.close(),controller.growth.close()]);controller.diagnostics.close();await controller.close();},'ai-friend: state, preview and correction journal');
 }

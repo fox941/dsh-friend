@@ -1,3 +1,5 @@
+当前进度（2026-11-06）：companion-adapter 0.77.1 新增文件工作间、版本历史与恢复、QuickJS 独立试跑和自制工具注册调用。原统一调度、记忆、人格与平台插件保持；暂未接空闲自行编程、通用终端或宿主插件安装。详见 [工作间设计与边界](workshop.md)。下方为历史记录。
+
 <!-- activity-reliability-current -->
 当前进度（2026-11-05）：companion-adapter0.76.0 / bilibili-tool0.10.0 / attention-scheduler0.3.0 提前校验兴趣字段、明确自主浏览执行对象，并在行为模型选择前检查自动视频资源；不扩大或重置额度，不重放旧失败。网页/论文读取尚未接入，相关任务保留等待真实能力。当前发布状态见 .work/activity-reliability-release.json 与[活动可靠性说明](activity-reliability.md)。下方为历史记录。
 <!-- /activity-reliability-current -->
