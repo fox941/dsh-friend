@@ -1,3 +1,7 @@
+<!-- memory-readiness -->
+记忆接入修复（2026-11-07）：companion-adapter 0.79.1 补齐空白部署的 Native 初始化、工作间全文检索、统一资料查找及夜间失败阶段诊断；空结果与不可用分开。原数据保留，新的共同经历专用写入器仍为待实现方案。见[修复及家里更新说明](docs/memory-readiness.md)与[共同经历证据分级设计](docs/shared-episode-design.md)。
+<!-- /memory-readiness -->
+
 联网接入更新（2026-11-06）：陪伴预设已补入 DSH 内置 web_search／web_fetch，复用现有凭据与匿名公开网页读取。对话内按需使用；空闲网页阅读后台执行器与自主工作设置表单仍待开发。见[联网说明](docs/web-access.md)。
 
 当前进度（2026-11-06）：0.78.1／活动中心0.3.1 已接自主写作与工具制作，复用统一选择与检查点；默认每天6个投入任务、24次模型步骤，脚本沿用128次。详见 [自主工作](docs/workshop-autonomy.md)，发布结果以 `.work/workshop-autonomy-release.json` 为准。

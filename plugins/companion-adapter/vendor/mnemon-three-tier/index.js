@@ -40,6 +40,14 @@ function evidenceInsights(evidence) {
 /** Preserve the original read identity and truncation when the Strategy admits or replays evidence. */
 function recallEvidence(evidence, results) {
 	const { items, ...metadata } = evidence;
+	// Memory Spaces 0.5.11 puts a Native sparse-results hint in `unavailable`
+	// when there are no matches. Only this exact, all-source advisory is benign;
+	// unknown failures and mixed advisory/error responses remain unavailable.
+	const notice = metadata.unavailable;
+	if (items.length === 0 && typeof notice === "string" && notice.trim() && notice.split("\n").every((line) => /^.+: sparse_results$/u.test(line))) {
+		delete metadata.unavailable;
+		metadata.metadata = { ...metadata.metadata, searchNotice: notice };
+	}
 	return {
 		...metadata,
 		truncated: metadata.truncated || results.length < items.length || results.some((result) => !items.some((item) => item.id === result.id && item.text === result.content))

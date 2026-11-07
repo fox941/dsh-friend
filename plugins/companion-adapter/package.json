@@ -1,6 +1,6 @@
 {
   "name": "@ai-friend/companion-adapter",
-  "version": "0.78.1",
+  "version": "0.79.1",
   "private": true,
   "type": "module",
   "description": "陪伴运行适配：主用户QQ私聊、统一记忆、有据成长、多项情绪与心境、夜间整理和可恢复保护。",

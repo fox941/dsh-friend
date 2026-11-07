@@ -1,4 +1,5 @@
 import {attachWorkshop} from './workshop-agent.js';
+import {attachLibrary} from './library-agent.js';
 import {attachPersonProfiles} from './person-profiles-agent.js';
 import {attachRecall} from './recall-agent.js';
 import {attachReplyIntegrity} from './reply-integrity.js';
@@ -35,9 +36,11 @@ function attach(ctx) {
   const capabilities=(agent)=>{
     const policy=adapter.policy();
     const names=ctx.tools.schemas(agent).map(tool=>tool.name).sort();
+    const active=policy.spaces.filter(space=>space.active),readable=active.map(space=>({id:space.id,hasRecords:adapter.client.presence(space.id)}));
     return {configuredChannels:adapter.configuredChannels,visibleTools:names.slice(0,80),visibleToolCount:names.length,
       savedMemorySharing:names.some(name=>name.startsWith('mnemon_'))?'本实例同一存储域内，共享已实际保存的用户画像和激活空间资料；实际可用性以工具回执为准，旧会话全文不会自动全量进入上下文。':'当前未发现可见的 Mnemon 记忆工具，不承诺可以存取共享记忆。',
       adapterReady:policy.enabled,adapterWritesAllowed:policy.writeEnabled,adapterIssue:policy.issue,
+      longTermRetrieval:{state:!policy.enabled?'configuration_unavailable':!active.length?'no_active_spaces':!names.includes('mnemon_recall')?'tool_unavailable_in_this_scope':readable.some(s=>s.hasRecords===null)?'storage_unavailable':'available',scopedRecallTool:names.includes('mnemon_recall'),stores:readable,emptyStoreIsUnavailable:false},
       activeNativeSpaces:policy.spaces.filter(space=>space.active).map(space=>({id:space.id,name:space.name,hasSavedRecords:adapter.client.presence(space.id)})),
       savedContentBoundary:'hasSavedRecords=true 证明该激活长期空间存在有效记录，false 表示检查时为空，null 表示未知。常驻画像为空不代表长期资料为空，也不能据此宣称换会话后所有资料都会消失。这不证明记录均为真实用户个人资料；具体内容必须召回核对。',
       pendingCorrections:adapter.status(),
@@ -89,5 +92,5 @@ function attach(ctx) {
   attachQQAgent(ctx,adapter);attachPlatforms(ctx,adapter);
   attachAttentionAgent(ctx,adapter);
   attachGoals(ctx,adapter);
-  attachProactive(ctx,adapter);attachWorkshop(ctx,adapter);
+  attachProactive(ctx,adapter);attachWorkshop(ctx,adapter);attachLibrary(ctx,adapter);
 }

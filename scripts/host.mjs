@@ -102,6 +102,15 @@ export async function startManagedHost({root=instanceRoot,project=projectRoot,bi
     // Never enter DSH after that request: its signal handlers do not exist yet.
     if (stopping) { server.close(); cleanup(); return; }
     await runCli();
+    if(!stopping){
+      const {connectDev}=await import('./dev-client.mjs');
+      const {initializeLocalMemory}=await import('./memory-readiness.mjs');
+      try{
+        const client=await connectDev({root:instanceRoot,host:address,port});
+        const result=await initializeLocalMemory({root:instanceRoot,client,label:scoped.id==='test'?'隔离测试记忆':'陪伴记忆'});
+        console.log('Memory initialization: '+result.status+'; existing memories retained.');
+      }catch{console.error('Memory initialization did not finish; inspect operations/memory-bootstrap.json. Existing data retained.');}
+    }
   } catch (error) {
     server.close();
     cleanup();

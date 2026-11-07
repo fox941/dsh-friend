@@ -2,6 +2,7 @@ import {NightlyStore,shanghaiDay} from './nightly-store.js';
 import {resumableNightly,nightlyRequestKey,nightlyIntentKey,matchesNightlyIntent} from './nightly-protocol.js';
 import {noSecret,hash,aborted,uuid} from './validation.js';
 import {ReviewTrace} from './review-trace.js';
+import {nightlyDiagnosis} from './nightly-diagnosis.js';
 const safeError=error=>{const value=String(error?.message??error).slice(0,650);try{noSecret(value);return value;}catch{return '失败诊断中疑似敏感内容已省略';}};
 function bounded(value,fallback,min,max){const n=value??fallback;if(!Number.isSafeInteger(n)||n<min||n>max)throw new Error('夜间整理配置超出范围');return n;}
 export function nightlyConfig(config={}){
@@ -16,7 +17,7 @@ export class NightlyController{
   writable(){if(this.closed||!this.config.enabled||!this.policy().writeEnabled||!this.preview.config.enabled||!this.applications.config.enabled)throw new Error('当前没有启用可写的夜间整理');}
   bind(host){this.host=host;this.lastActivity=this.now().getTime();}
   status(id){
-    const row=id?this.store.get(uuid(id)):null,c=this.store.control(),chosen=row?.id??this.active?.id??this.store.recent(1)[0]?.id,socialMaintenance=chosen?this.store.batches(chosen).find(b=>b.position===0)?.result?.socialMaintenance??null:null;return {socialMaintenance,enabled:this.store.enabled(),hostReady:Boolean(this.host),schedule:{timeZone:'Asia/Shanghai',time:this.config.time,nextDue:new Date(c.next_due).toISOString()},paused:c.enabled_override===0,pauseReason:c.reason,running:this.active?{runId:this.active.id,jobId:this.active.jobId??null}:null,callsToday:this.store.calls(),callsRemaining:Math.max(0,this.config.dailyCallLimit-this.store.calls()),maxBatches:this.config.maxBatches,runTimeoutMs:this.config.runTimeoutMs,preview:this.preview.status(),idleSeconds:this.config.idleSeconds,lastError:this.lastDriveError,recent:this.store.recent(),...row?{run:{...row,authorization_json:undefined},batches:this.store.batches(row.id)}:{},...this.materials?{materialsOverview:this.materials.status()}:{},summary:'后台只处理有来源的增量整理，不生成虚构经历；无新交流不请求审核模型。'};
+    const row=id?this.store.get(uuid(id)):null,c=this.store.control(),chosen=row?.id??this.active?.id??this.store.recent(1)[0]?.id,socialMaintenance=chosen?this.store.batches(chosen).find(b=>b.position===0)?.result?.socialMaintenance??null:null;return {socialMaintenance,diagnosis:nightlyDiagnosis(this,chosen),enabled:this.store.enabled(),hostReady:Boolean(this.host),schedule:{timeZone:'Asia/Shanghai',time:this.config.time,nextDue:new Date(c.next_due).toISOString()},paused:c.enabled_override===0,pauseReason:c.reason,running:this.active?{runId:this.active.id,jobId:this.active.jobId??null}:null,callsToday:this.store.calls(),callsRemaining:Math.max(0,this.config.dailyCallLimit-this.store.calls()),maxBatches:this.config.maxBatches,runTimeoutMs:this.config.runTimeoutMs,preview:this.preview.status(),idleSeconds:this.config.idleSeconds,lastError:this.lastDriveError,recent:this.store.recent(),...row?{run:{...row,authorization_json:undefined},batches:this.store.batches(row.id)}:{},...this.materials?{materialsOverview:this.materials.status()}:{},summary:'后台只处理有来源的增量整理，不生成虚构经历；无新交流不请求审核模型。'};
   }
   foreground(){if(this.attention?.enabled())return;this.lastActivity=this.now().getTime();this.active?.stop.abort(Object.assign(new Error('前台交流优先，整理让路'),{code:'NIGHTLY_YIELD'}));}
   control(args,caller){

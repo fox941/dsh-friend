@@ -75,7 +75,7 @@ test('capability context reflects tools and receipts without adding a persona',a
   const ctx={friendAdapter:{client:{presence:()=>true},policy:()=>({enabled:true,writeEnabled:false,spaces:[{id:'default',name:'test',active:true}],issue:null}),configuredChannels:['web'],status:()=>({pending:0,paused:0}),journal:{actions:()=>actions,action:(_id,_session,tool,succeeded)=>actions.push({tool,succeeded})}},
     tools:{register:def=>tools.set(def.name,def),schemas:()=>[...tools.values(),{name:'mnemon_recall'}]},systemPrompt:{section:value=>sections.set(value.name,value),context:value=>contexts.set(value.name,value)},on:(name,fn)=>listeners.set(name,fn)};
   ctx.inject=(_services,fn)=>fn(ctx);applyAgent(ctx);
-  assert.deepEqual([...tools.keys()],['friend_memory_correct','friend_memory_history','friend_capabilities','friend_memory_recall','friend_memory_evidence_check']);
+  assert.deepEqual([...tools.keys()],['friend_memory_correct','friend_memory_history','friend_capabilities','friend_memory_recall','friend_memory_evidence_check','friend_library_search']);
   const before=await tools.get('friend_capabilities').execute({}, {agent:actor});
   assert.deepEqual(before.configuredChannels,['web']);assert.equal(before.adapterWritesAllowed,false);assert.deepEqual(before.recentExternalToolExecutions,[]);
   assert.equal(before.activeNativeSpaces[0].hasSavedRecords,true);

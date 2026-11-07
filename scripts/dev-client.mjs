@@ -8,13 +8,14 @@ export async function latestLaunchUrl(directory,{host=webHost,port=webPort}={}) 
   const logs=(await Promise.all(names.map(async name=>({name,mtime:(await fs.stat(path.join(directory,name))).mtimeMs})))).sort((a,b)=>b.mtime-a.mtime||b.name.localeCompare(a.name));
   for (const {name} of logs) {
     const text = await fs.readFile(path.join(directory, name), 'utf8');
-    const match = text.match(/dsh web: (http:\/\/[^\r\n ]*)/);
-    if (match) {const url=new URL(match[1]);if(url.hostname===host&&Number(url.port)===port)return match[1];}
+    for(const match of [...text.matchAll(/dsh web: (http:\/\/[^\r\n ]*)/g)].reverse()){
+      const url=new URL(match[1]);if(url.hostname===host&&Number(url.port)===port)return match[1];
+    }
   }
   throw new Error('Dev host readiness URL was not found');
 }
-export async function connectDev() {
-  const launchUrl=await latestLaunchUrl(path.join(instanceRoot,'logs'));
+export async function connectDev({root=instanceRoot,host=webHost,port=webPort}={}) {
+  const launchUrl=await latestLaunchUrl(path.join(root,'logs'),{host,port});
   const response = await fetch(launchUrl, { redirect: 'manual', signal: AbortSignal.timeout(10000) });
   if (response.status !== 303) throw new Error(`Local authentication failed (${response.status})`);
   const cookie = response.headers.getSetCookie().map(value => value.split(';')[0]).join('; ');

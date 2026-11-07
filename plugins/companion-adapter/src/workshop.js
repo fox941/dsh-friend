@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {runWorkshopScript} from './workshop-sandbox.js';
+import {searchWorkshopFiles} from './workshop-search.js';
 
 const hash=s=>crypto.createHash('sha256').update(s).digest('hex');
 const encode=x=>JSON.stringify(x,null,2)+'\n';
@@ -33,6 +34,7 @@ export class Workshop{
   async save(){this.state.revision++;await atomic(path.join(this.root,'registry.json'),encode(this.state));}
   async readInternal(name){workshopPath(name);const file=path.join(this.files,...name.split('/'));await noLinks(file);let handle;try{handle=await fs.open(file,constants.O_RDONLY);const stat=await handle.stat();if(!stat.isFile()||stat.size>limits.fileBytes)throw Error('文件类型或大小不支持');const bytes=await handle.readFile(),content=new TextDecoder('utf-8',{fatal:true}).decode(bytes);return {path:name,content,version:hash(bytes),bytes:bytes.length};}catch(e){if(e.code==='ENOENT')return {path:name,content:null,version:'absent',bytes:0};throw e;}finally{await handle?.close();}}
   read(name){return this.serial(()=>this.readInternal(name));}
+  search(args,signal){return this.serial(()=>searchWorkshopFiles(this,args,signal));}
   async inventory(){const out=[];const walk=async(dir,prefix='')=>{await noLinks(dir);for(const e of await fs.readdir(dir,{withFileTypes:true})){if(e.isSymbolicLink())throw Error('工作目录出现链接，停止读取');const name=prefix+e.name;workshopPath(name);if(e.isDirectory())await walk(path.join(dir,e.name),name+'/');else if(e.isFile()){const s=await fs.stat(path.join(dir,e.name));out.push({path:name,bytes:s.size});if(out.length>limits.files)throw Error('工作文件数超过限制');}else throw Error('工作目录出现不支持的文件类型');}};await walk(this.files);return out.sort((a,b)=>a.path.localeCompare(b.path));}
   list(){return this.serial(async()=>({status:'read',files:await this.inventory(),...this.status()}));}
   status(){return {enabled:this.enabled(),running:this.running,limits,storage:'本实例 workshop；完整实例备份/迁移携带，自制工具不是记忆或人格',registered:this.state?Object.values(this.state.tools).filter(t=>t.active).map(t=>({name:t.name,description:t.active.description,version:t.active.version,readFiles:t.active.readFiles,writeFiles:t.active.writeFiles})):[],drafts:this.state?Object.values(this.state.tools).filter(t=>t.draft).map(t=>({name:t.name,version:t.draft.version,tested:t.draft.test?.passed===true})):[],execution:'QuickJS WASM独立进程，仅JSON输入输出；不提供Node、网络、终端、插件安装或宿主工具调用'};}

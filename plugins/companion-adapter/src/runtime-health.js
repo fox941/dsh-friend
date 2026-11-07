@@ -12,7 +12,7 @@ export function companionRuntimeHealth(adapter,now=Date.now()){
  return {schema:'ai-friend/runtime-health/1',checkedAt:new Date(now).toISOString(),identity:adapter.growth.store.meta('identity'),
   ...adapter.nightly?.materials?{nightlyMaterials:adapter.nightly.materials.health()}:{},
   memory:{configured:policy.enabled,writeEnabled:policy.writeEnabled,activeSpaces:spaces.length,
-    stores:spaces.slice(0,4).map(s=>({id:s.id,readable:adapter.client.presence(s.id)!==null})),partial:spaces.length>4},
+    stores:spaces.slice(0,4).map(s=>{const present=adapter.client.presence(s.id);return {id:s.id,readable:present!==null,hasRecords:present};}),emptyLibraryIsAvailable:true,partial:spaces.length>4},
   qq:{enabled:qq.enabled,connected:qq.connected,accountVerified:qq.accountVerified,issue:Boolean(qq.lastError),reliability:qq.reliability??null,socialMemory:adapter.platforms?.socialMemory?.status()??null},
   bilibili:{enabled:Boolean(inbox?.store.enabled(inbox.config.enabled)),accountBound:Boolean(bili?.account_id),
     inboxHostReady:Boolean(inbox?.host)&&!inbox?.closed,socialHostReady:Boolean(adapter.bilibiliSocial?.host)&&!adapter.bilibiliSocial?.closed,activityHostReady:Boolean(adapter.activities?.host)&&!adapter.activities?.closed,lastPollAt:bili?.updated_at??null,

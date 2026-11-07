@@ -10,7 +10,7 @@ export function recallRequest(args){
 export async function dispatchRecall(ctx,exec,query,complexReason,mode='smart'){
  if(!['smart','keyword'].includes(mode))throw Error('回忆只支持既有smart或keyword检索模式');
  aborted(exec.signal);
- if(!exec.token||typeof ctx.tools.execute!=='function'||!ctx.tools.get?.('mnemon_recall',exec.agent))return {results:[],unavailable:true,reason:'当前会话没有可调用的Mnemon召回；未直接读取其他存储域'};
+ if(!exec.token||typeof ctx.tools.execute!=='function'||!ctx.tools.get?.('mnemon_recall',exec.agent))return {results:[],unavailable:true,unavailableCode:!exec.token?'parent_capability_missing':'scoped_recall_tool_missing',reason:'当前会话没有可调用的Mnemon召回；未直接读取其他存储域。此状态不证明数据库不存在或数据已丢失'};
  let result;try{result=await ctx.tools.execute({callId:randomUUID(),rootCallId:exec.rootCallId??exec.callId,parent:exec.token,name:'mnemon_recall',arguments:{query,mode,limit:6,...complexReason?{intent:'complex:'+complexReason}:{}},agent:exec.agent,signal:exec.signal});}catch(error){aborted(exec.signal);return {results:[],unavailable:true,reason:'原召回工具未完成，不能据此断定没有记忆'};}
  for(const context of result.additionalContexts??[])exec.deferContext?.(context);
  if(!result.isError&&result.concludesTurn)exec.concludeTurn?.();aborted(exec.signal);
@@ -27,6 +27,7 @@ export async function recallEvidence(args,read,signal){
   if(!response||!Array.isArray(response.results))throw Error('回忆响应格式无效');
   const call={query,mode,notRun:response.notRun===true,budgetExhausted:response.budgetExhausted===true,unavailable:Boolean(response.unavailable),truncated:response.memoryEvidence?.truncated===true,admitted:0,...response.memoryEvidence?{memoryEvidence:structuredClone(response.memoryEvidence)}:{}};
   calls.push(call);unavailable||=call.unavailable;limited||=call.truncated||call.notRun||call.budgetExhausted;
+  if(call.unavailable&&response.unavailableCode)call.unavailableCode=response.unavailableCode;
   // A no-run response must never smuggle results from another turn or Source.
   if(call.notRun||call.unavailable)break;
   for(const memory of response.results){

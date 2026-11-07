@@ -12,6 +12,7 @@ friend_tool_read返回代码和版本；注册时传当前草稿version与成功
   ctx.systemPrompt.context({name:'ai-friend:workshop-index',order:185,required:true,interpolate:false,text:({scope})=>{try{source({agent:scope});return JSON.stringify(w.status());}catch{return '';}}});
   const add=(name,description,properties,required,run,timeoutMs=30000)=>ctx.tools.register({name,description,parameters:{type:'object',properties,required,additionalProperties:false},output,timeoutMs,async execute(args,exec){const proof=source(exec);if(name==='friend_workshop_task_propose')userEvidence(exec.agent,args.evidenceQuote);if(name==='friend_workshop_task_control')userEvidence(exec.agent,args.requestQuote);exec.signal?.throwIfAborted();return run(args,proof,exec.signal);}});
   add('friend_workshop_list','列出本角色工作文件、自制工具和明确运行边界；不读取其他目录。',{},[],()=>w.list());
+  add('friend_workshop_search','检索本角色工作间的日记、梦、作品和其他文本，返回当前原件路径与版本；作品不等于已审核事实。',{query:s('文件名或正文关键词，最多300字'),limit:{type:'integer',minimum:1,maximum:12}},['query'],(a,_p,signal)=>w.search(a,signal));
   add('friend_workshop_read','读取工作间UTF-8文本及当前版本；不存在返回version=absent。',{path:s('工作间相对路径，例如 notes/idea.md')},['path'],a=>w.read(a.path));
   add('friend_workshop_write','在专属工作间创建或修改文件，核对旧版本并保留历史；不写记忆或人格。',{path:s('相对路径'),content:s('完整UTF-8文本，最多128KiB'),expectedVersion:s('刚read返回的version，新文件absent')},['path','content','expectedVersion'],(a,p)=>w.write(a,p));
   add('friend_workshop_history','列出某工作文件最近30条变更回执，不删除历史。',{path:s('相对路径')},['path'],a=>w.history(a.path));
